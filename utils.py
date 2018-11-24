@@ -16,14 +16,9 @@ def get_dictionary(wikt_file):
                     wikt_dic[de].add(en)
     return wikt_dic
 
-def get_words(target, source):
+def get_words(source):
     words = set()
-    with codecs.open(target, 'r') as target_reader, codecs.open(source, 'r') as source_reader:
-        for line in target_reader:
-            spl = line.strip().split('\t')
-            if len(spl) > 1:
-                t = spl[1]
-                words.add(t)
+    with codecs.open(source, 'r') as source_reader:
         for line in source_reader:
             spl = line.strip().split('\t')
             if len(spl) > 1:

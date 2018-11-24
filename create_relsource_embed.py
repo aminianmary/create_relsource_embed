@@ -5,8 +5,6 @@ import numpy as np
 
 if __name__ == '__main__':
     parser = OptionParser()
-    parser.add_option("--source", dest="source", help="source training data", metavar="FILE", default=None)
-    parser.add_option("--target", dest="target", help="target training data", metavar="FILE", default=None)
     parser.add_option("--wikt", dest="wiktionary", help="wiktionary file", metavar="FILE", default=None)
     parser.add_option("--extrn", dest="external_embedding", help="external embedding", metavar="FILE", default=None)
     parser.add_option("--output", dest="output", help="output file", metavar="FILE", default=None)
@@ -25,14 +23,13 @@ if __name__ == '__main__':
     edim = len(external_embedding.values()[0])
     print 'Read '+ str(len(external_embedding)) +' English entries!'
 
-    print '\nReading source+target words...'
-    words = get_words(options.target, options.source)
-    print 'Size: '+ str(len(words)) + '...Done!'
     writer = codecs.open(options.output,'w')
 
     print'\nGetting relsource embeddings...'
     counter =0
-    for t in words:
+    target_words_added = set()
+
+    for t in wikt_dic.keys():
         counter+=1
         if counter%1000==0:
             print str(counter)+'...'
@@ -40,33 +37,27 @@ if __name__ == '__main__':
         wikt_embeddings = []
         if t in external_embedding:
             wikt_embeddings.append(external_embedding[t])
-        elif t.lower in external_embedding:
-            wikt_embeddings.append(external_embedding[t.lower])
+            target_words_added.add(t)
 
-        if t in wikt_dic:
-            wikt = wikt_dic[t]
-            for s in wikt:
-                if s in external_embedding:
-                    wikt_embeddings.append(external_embedding[s])
-                elif s.title() in external_embedding:
-                    wikt_embeddings.append(external_embedding[s.title()])
-
-        elif t.lower() in wikt_dic:
-            wikt = wikt_dic[t.lower()]
-            for s in wikt:
-                if s in external_embedding:
-                    wikt_embeddings.append(external_embedding[s])
-                elif s.title() in external_embedding:
-                    wikt_embeddings.append(external_embedding[s.title()])
+        for s in wikt_dic[t]:
+            target_words_added.add(s)
+            if s in external_embedding:
+                wikt_embeddings.append(external_embedding[s])
+            if s.title() in external_embedding:
+                wikt_embeddings.append(external_embedding[s.title()])
+            if s.lower() in external_embedding:
+                wikt_embeddings.append(external_embedding[s.lower()])
 
         if len(wikt_embeddings)>0:
             wikt_embeddings = np.array(wikt_embeddings)
             wikt_avg = np.average(wikt_embeddings, axis=0)
-            writer.write(t+' ')
-            for e in wikt_avg:
-                writer.write(str(e)+' ')
+            writer.write(' '.join([t] + [str(e) for e in wikt_avg]))
             writer.write('\n')
-    print str(len(words)) +'\nDone!'
+
+    for t in external_embedding.keys():
+        if not t in target_words_added:
+            writer.write(' '.join([t] + [str(e) for e in external_embedding[t]]))
+            writer.write('\n')
 
     writer.flush()
     writer.close()
