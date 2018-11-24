@@ -28,8 +28,12 @@ if __name__ == '__main__':
     print'\nGetting relsource embeddings...'
     counter =0
     target_words_added = set()
-    covered = 0
+    covered,skipped = 0, 0
+
     for t in wikt_dic.keys():
+        if ' ' in t:
+            skipped += 1
+            continue
         counter+=1
         if counter%1000==0:
             sys.stdout.write(str(counter)+'...')
@@ -59,6 +63,6 @@ if __name__ == '__main__':
             writer.write(' '.join([t] + [str(e) for e in external_embedding[t]]))
             writer.write('\n')
     sys.stdout.write('\n')
-    print str((100.0 * float(covered)/len(wikt_dic)))
+    print str(round((100.0 * float(covered)/len(wikt_dic)),2)), skipped
     writer.flush()
     writer.close()
